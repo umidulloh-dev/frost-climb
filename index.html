@@ -65,8 +65,8 @@ function floorAt(n){
   while(floors.length<=n){
     const i=floors.length, inner=VW-2*WALL;
     if(i===0||i%50===0){floors.push({n:i,x:WALL,w:inner,y:-i*GAP});continue;}
-    const frac=Math.max(0.24,0.6-i*0.0011)*(0.75+rnd()*0.5); // shrinks with height
-    const w=Math.min(inner*0.9,Math.max(62,inner*frac));
+    const frac=Math.max(0.16,0.36-i*0.0008)*(0.8+rnd()*0.4); // short steps, shrink with height
+    const w=Math.max(48,inner*frac);
     floors.push({n:i,x:WALL+rnd()*(inner-w),w,y:-i*GAP});
   }
   return floors[n];
@@ -386,6 +386,7 @@ function drawTower(p,ox){
   const col=COLORS[p.id];
   outlined(solo?"рекорд "+Math.max(record,score(p)):p.id==="p1"?"ИГРОК 1":"ИГРОК 2",WALL+10,30,16,solo?"#ffd34d":col);
   outlined("этаж "+p.best,WALL+10,50,13,"#e8f3ff");
+  ctx.globalAlpha=0.45;ctx.fillStyle="#e8f3ff";ctx.font="10px PT Mono, monospace";ctx.textAlign="right";ctx.fillText("v3",VW-WALL-10,VH-10);ctx.globalAlpha=1;
   outlined(score(p),VW-WALL-10,40,28,"#ffffff","right");
   if(p.comboJ){
     const bw=VW-2*WALL-20,k=Math.max(0,p.comboT/3);
