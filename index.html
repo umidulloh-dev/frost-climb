@@ -28,7 +28,8 @@ body{background:var(--night);color:var(--ink);font-family:var(--mono);display:fl
 canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
 html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
 #pad{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:10px;
-  padding-bottom:max(6px, env(safe-area-inset-bottom, 0px));touch-action:none}
+  padding-bottom:max(2px, calc(env(safe-area-inset-bottom, 0px) - 20px));touch-action:none}
+@media (pointer: coarse){body{padding-left:max(6px, env(safe-area-inset-left, 0px));padding-right:max(6px, env(safe-area-inset-right, 0px));padding-bottom:0}}
 #pad .grp{display:flex;gap:12px}
 #pad button{appearance:none;border:4px solid #1b1433;border-radius:22px;width:84px;height:84px;
   font:28px var(--display);color:#1b1433;background:#c4bdf2;box-shadow:0 6px 0 #1b1433;touch-action:none;
@@ -64,7 +65,8 @@ function floorAt(n){
   while(floors.length<=n){
     const i=floors.length, inner=VW-2*WALL;
     if(i===0||i%50===0){floors.push({n:i,x:WALL,w:inner,y:-i*GAP});continue;}
-    const w=Math.min(inner,inner*Math.max(0.55,(0.92-i*0.0006)-rnd()*0.22)); // nearly wall to wall
+    const frac=Math.max(0.24,0.6-i*0.0011)*(0.75+rnd()*0.5); // shrinks with height
+    const w=Math.min(inner*0.9,Math.max(62,inner*frac));
     floors.push({n:i,x:WALL+rnd()*(inner-w),w,y:-i*GAP});
   }
   return floors[n];
@@ -99,7 +101,7 @@ let P, state, t, cd, scrollOn, winner, level, scrollT, hurryT, keys={};
 function fitWidth(){
   const r=cv.getBoundingClientRect();
   if(r.width>0&&r.height>0)VW=Math.round(Math.max(touchUI?330:420,Math.min(900,VH*r.width/r.height)));
-  WALL=VW<480?34:64;
+  WALL=VW<480?24:64;
 }
 function reset(){
   fitWidth();
@@ -229,9 +231,9 @@ function update(dt){
   if(state!=="play")return;
   t+=dt;
   if(!scrollOn&&(t>4||P.p1.best>=5||(!solo&&P.p2.best>=5)))scrollOn=true;
-  if(scrollOn){scrollT+=dt;const lv=Math.floor(scrollT/30);if(lv>level){level=lv;hurryT=2;}}
+  if(scrollOn){scrollT+=dt;const lv=Math.floor(scrollT/25);if(lv>level){level=lv;hurryT=2;}}
   if(hurryT>0)hurryT-=dt;
-  const speed=scrollOn?Math.min(260,45+level*40+scrollT*0.6):0;
+  const speed=scrollOn?Math.min(320,60+level*45+scrollT*0.8):0;
   step(P.p1,dt,speed);
   if(solo){
     if(!P.p1.alive){state="over";winner="p1";
@@ -452,7 +454,7 @@ function banner(){
       outlined(score(P.p1)+"",tw/2,VH/2+12,40,"#ffffff","center");
       ctx.fillStyle="#9fd8ff";ctx.font="14px PT Mono, monospace";ctx.textAlign="center";
       ctx.fillText(newRecord?"новый рекорд!":`этаж ${P.p1.best} · рекорд ${record}`,tw/2,VH/2+40);
-      ctx.fillStyle="#7f93b8";ctx.fillText("Enter или тап — ещё раз",tw/2,VH/2+66);
+      ctx.fillStyle="#7f93b8";ctx.fillText(touchUI?"тап — ещё раз":"Enter — ещё раз",tw/2,VH/2+66);
       return;
     }
     ctx.textAlign="center";
