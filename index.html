@@ -31,14 +31,14 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;o
   padding:0 max(16px, env(safe-area-inset-right, 0px)) max(14px, calc(env(safe-area-inset-bottom, 0px) - 8px)) max(16px, env(safe-area-inset-left, 0px));
   touch-action:none;pointer-events:none}
 #pad .grp{display:flex;gap:10px}
-#pad button{pointer-events:auto;appearance:none;border:3px solid rgba(27,20,51,.55);border-radius:18px;width:62px;height:62px;
-  font:13px var(--display);color:#1b1433;background:rgba(196,189,242,.42);box-shadow:0 4px 0 rgba(27,20,51,.45);touch-action:none;
+#pad button{pointer-events:auto;appearance:none;border:3px solid rgba(27,20,51,.55);border-radius:15px;width:50px;height:50px;
+  font:11px var(--display);color:#1b1433;background:rgba(196,189,242,.42);box-shadow:0 4px 0 rgba(27,20,51,.45);touch-action:none;
   -webkit-tap-highlight-color:transparent;display:grid;place-items:center;padding:0;
   -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #pad button.on{transform:translateY(3px);box-shadow:0 1px 0 rgba(27,20,51,.45);background:rgba(236,232,255,.7)}
-#pad #bj{width:96px;background:rgba(255,122,61,.62);color:#fff;letter-spacing:.04em;text-shadow:0 2px 0 rgba(27,20,51,.6)}
+#pad #bj{width:78px;background:rgba(255,122,61,.62);color:#fff;letter-spacing:.04em;text-shadow:0 2px 0 rgba(27,20,51,.6)}
 #pad #bj.on{background:rgba(255,167,122,.85)}
-#pad svg{width:24px;height:24px;fill:rgba(27,20,51,.85)}
+#pad svg{width:20px;height:20px;fill:rgba(27,20,51,.85)}
 body.touch{padding:0!important}
 /* phones: take the real visible height (iOS 100% leaves a gap when the toolbar hides) */
 @media (pointer:coarse){html,body{height:100vh;height:var(--app-h,100dvh)}}
@@ -58,7 +58,7 @@ body.touch{padding:0!important}
 
 <script>
 (() => {
-let VW = 460, WALL = 64; const VH = 600, MID = 14, GAP = 72, PR = 13;
+let VW = 460, WALL = 64; const VH = (matchMedia("(pointer: coarse)").matches||"ontouchstart" in window)?740:600, MID = 14, GAP = 72, PR = 13;
 const ACC = 1700, AIR_ACC = 1300, MAXV = 430, FRICT = 1500, GRAV = 2300;
 const COLORS = { p1: "#ff7a3d", p2: "#5ce1b8" };
 const cv = document.getElementById("c"), ctx = cv.getContext("2d");
@@ -82,7 +82,7 @@ function floorAt(n){
 function mkPlayer(id){
   return {id,x:VW/2+(id==="p1"?-40:40),y:0,vx:0,vy:0,ground:true,face:1,
     floor:0,best:0,last:0,comboF:0,comboJ:0,comboT:0,bonus:0,flash:null,flashT:0,
-    cam:-(VH-(touchUI?150:70)),alive:true,squash:0,rot:0,spin:0,run:0,tilt:0,shake:0,trail:[],parts:[],airFrom:0};
+    cam:-(VH-(touchUI?130:70)),alive:true,squash:0,rot:0,spin:0,run:0,tilt:0,shake:0,trail:[],parts:[],airFrom:0};
 }
 // ---------- particles ----------
 function emit(p,x,y,n,o){
@@ -132,7 +132,7 @@ addEventListener("blur",()=>{for(const p in input)input[p]={l:0,r:0,j:0};});
 // touch: each half split into left / jump / right zones
 // touch: on-screen pad; fingers can slide between the arrow buttons
 const touchUI=matchMedia("(pointer: coarse)").matches||"ontouchstart" in window;
-const FS=touchUI?0.78:1; // phone: smaller text
+const FS=touchUI?0.9:1; // phone: smaller text
 const pad=document.getElementById("pad"), btnMap={bl:"tl",br:"tr",bj:"tj"};
 if(touchUI){pad.hidden=false;document.body.classList.add("touch");}
 // phone: iOS home-screen app with a translucent status bar reports a viewport that is short by the
@@ -414,7 +414,7 @@ function drawTower(p,ox){
   const col=COLORS[p.id];
   outlined(solo?"рекорд "+Math.max(record,score(p)):p.id==="p1"?"ИГРОК 1":"ИГРОК 2",WALL+10,30,16,solo?"#ffd34d":col);
   outlined("этаж "+p.best,WALL+10,50,13,"#e8f3ff");
-  ctx.globalAlpha=0.45;ctx.fillStyle="#e8f3ff";ctx.font=`${Math.round(10*FS)}px PT Mono, monospace`;ctx.textAlign="right";ctx.fillText("v6",VW-WALL-10,56);ctx.globalAlpha=1;
+  ctx.globalAlpha=0.45;ctx.fillStyle="#e8f3ff";ctx.font=`${Math.round(10*FS)}px PT Mono, monospace`;ctx.textAlign="right";ctx.fillText("v7",VW-WALL-10,56);ctx.globalAlpha=1;
   outlined(score(p),VW-WALL-10,40,28,"#ffffff","right");
   if(p.comboJ){
     const bw=VW-2*WALL-20,k=Math.max(0,p.comboT/3);
