@@ -33,7 +33,7 @@ html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;o
 #pad .grp{display:flex;gap:10px}
 #pad button{pointer-events:auto;appearance:none;border:3px solid rgba(27,20,51,.55);border-radius:15px;width:50px;height:50px;
   font:11px var(--display);color:#1b1433;background:rgba(196,189,242,.42);box-shadow:0 4px 0 rgba(27,20,51,.45);touch-action:none;
-  -webkit-tap-highlight-color:transparent;display:grid;place-items:center;padding:0;
+  -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;display:grid;place-items:center;padding:0;
   -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #pad button.on{transform:translateY(3px);box-shadow:0 1px 0 rgba(27,20,51,.45);background:rgba(236,232,255,.7)}
 #pad #bj{width:78px;background:rgba(255,122,61,.62);color:#fff;letter-spacing:.04em;text-shadow:0 2px 0 rgba(27,20,51,.6)}
@@ -155,23 +155,33 @@ function syncPad(){
   for(const id of fingers.values()){input.p1[btnMap[id]]=1;document.getElementById(id).classList.add("on");}
 }
 function btnAt(x,y){const el=document.elementFromPoint(x,y)?.closest?.("#pad button");return el?el.id:null;}
-pad.addEventListener("pointerdown",e=>{
-  e.preventDefault();
-  if(state==="over"){reset();return;}
-  const id=btnAt(e.clientX,e.clientY);if(!id)return;
-  fingers.set(e.pointerId,id);pad.setPointerCapture?.(e.pointerId);syncPad();
-  navigator.vibrate?.(8);
-});
-pad.addEventListener("pointermove",e=>{
-  if(!fingers.has(e.pointerId))return;
-  const id=btnAt(e.clientX,e.clientY), cur=fingers.get(e.pointerId);
-  if(id&&id!==cur&&cur!=="bj"&&id!=="bj"){fingers.set(e.pointerId,id);syncPad();}
-});
-const liftF=e=>{if(fingers.delete(e.pointerId))syncPad();};
-pad.addEventListener("pointerup",liftF);pad.addEventListener("pointercancel",liftF);
+// Stateless touch: on every touch event rebuild pressed buttons from the fingers actually on screen,
+// so a lost "touchend" (iOS gestures, long-press, finger sliding off the edge) can never leave a button stuck.
+function fromTouches(list){
+  fingers.clear();
+  for(const t of list){const id=btnAt(t.clientX,t.clientY);if(id)fingers.set(t.identifier,id);}
+  syncPad();
+}
+function releaseAll(){fingers.clear();syncPad();}
+document.addEventListener("touchstart",e=>{
+  if(e.target.closest?.("#pad")||e.target===cv)e.preventDefault();
+  if(state==="over"){reset();releaseAll();return;}
+  const before=fingers.size;fromTouches(e.touches);if(fingers.size>before)navigator.vibrate?.(8);
+},{passive:false});
+document.addEventListener("touchmove",e=>{e.preventDefault();fromTouches(e.touches);},{passive:false});
+document.addEventListener("touchend",e=>fromTouches(e.touches));
+document.addEventListener("touchcancel",e=>fromTouches(e.touches));
+addEventListener("blur",releaseAll);addEventListener("pagehide",releaseAll);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)releaseAll();});
+// fallback for devices without touch events (pointer only)
+if(!("ontouchstart" in window)){
+  pad.addEventListener("pointerdown",e=>{e.preventDefault();if(state==="over"){reset();return;}
+    const id=btnAt(e.clientX,e.clientY);if(id){fingers.set(e.pointerId,id);syncPad();}});
+  const liftF=e=>{if(fingers.delete(e.pointerId))syncPad();};
+  addEventListener("pointerup",liftF);addEventListener("pointercancel",liftF);
+}
 pad.addEventListener("contextmenu",e=>e.preventDefault());
 cv.addEventListener("pointerdown",()=>{if(state==="over")reset();});
-document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
 
 // ---------- simulation ----------
 function landCheck(p,prevY){
@@ -414,7 +424,7 @@ function drawTower(p,ox){
   const col=COLORS[p.id];
   outlined(solo?"рекорд "+Math.max(record,score(p)):p.id==="p1"?"ИГРОК 1":"ИГРОК 2",WALL+10,30,16,solo?"#ffd34d":col);
   outlined("этаж "+p.best,WALL+10,50,13,"#e8f3ff");
-  ctx.globalAlpha=0.45;ctx.fillStyle="#e8f3ff";ctx.font=`${Math.round(10*FS)}px PT Mono, monospace`;ctx.textAlign="right";ctx.fillText("v7",VW-WALL-10,56);ctx.globalAlpha=1;
+  ctx.globalAlpha=0.45;ctx.fillStyle="#e8f3ff";ctx.font=`${Math.round(10*FS)}px PT Mono, monospace`;ctx.textAlign="right";ctx.fillText("v8",VW-WALL-10,56);ctx.globalAlpha=1;
   outlined(score(p),VW-WALL-10,40,28,"#ffffff","right");
   if(p.comboJ){
     const bw=VW-2*WALL-20,k=Math.max(0,p.comboT/3);
